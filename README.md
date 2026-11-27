@@ -92,6 +92,7 @@ make airflow               # Airflow 3 trong Docker, DAG snapshot_pipeline chạ
 | Địa chỉ | Là gì |
 | --- | --- |
 | http://localhost:3000 | Grafana (admin/admin; xem ẩn danh được): Tổng quan, Chi tiết feature, Nhật ký chạy |
+| http://localhost:3000/alerting/list | Trạng thái 3 alert rule; mở một rule → tab History để xem lịch sử. Dashboard Tổng quan cũng có panel "Cảnh báo Grafana" |
 | http://localhost:8080 | Airflow |
 | http://localhost:8088/reports/ | Báo cáo Evidently HTML của snapshot warn/fail |
 | http://localhost:8088/alerts.html | Thông báo Grafana đã gửi tới contact point webhook (JSON ở `/alerts`) |

@@ -433,6 +433,38 @@
     },
     {
       "id": 7,
+      "type": "alertlist",
+      "title": "Cảnh báo Grafana",
+      "description": "Trạng thái hiện tại của 3 alert rule (Alerting → Alert rules). Lịch sử chuyển trạng thái: mở rule → tab History.",
+      "gridPos": {
+        "x": 0,
+        "y": 13,
+        "w": 24,
+        "h": 8
+      },
+      "options": {
+        "viewMode": "list",
+        "groupMode": "default",
+        "groupBy": [],
+        "maxItems": 20,
+        "sortOrder": 1,
+        "dashboardAlerts": false,
+        "alertName": "",
+        "alertInstanceLabelFilter": "{team=\"risk-data\"}",
+        "datasource": "grafana",
+        "stateFilter": {
+          "firing": true,
+          "pending": true,
+          "recovering": true,
+          "noData": true,
+          "normal": true,
+          "error": true
+        },
+        "showInstances": false
+      }
+    },
+    {
+      "id": 8,
       "type": "timeseries",
       "title": "Số dòng theo view",
       "description": "",
@@ -442,7 +474,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 13,
+        "y": 21,
         "w": 12,
         "h": 7
       },
@@ -471,7 +503,7 @@
       "options": {}
     },
     {
-      "id": 8,
+      "id": 9,
       "type": "timeseries",
       "title": "Độ tươi nguồn (giờ)",
       "description": "",
@@ -481,7 +513,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 13,
+        "y": 21,
         "w": 12,
         "h": 7
       },
@@ -562,7 +594,7 @@
       "options": {}
     },
     {
-      "id": 9,
+      "id": 10,
       "type": "table",
       "title": "10 lần chạy gần nhất",
       "description": "",
@@ -572,7 +604,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 20,
+        "y": 28,
         "w": 24,
         "h": 12
       },

@@ -18,7 +18,7 @@
   "refresh": "1m",
   "panels": [
     {
-      "id": 16,
+      "id": 17,
       "type": "table",
       "title": "snapshot_runs",
       "description": "",
@@ -165,7 +165,7 @@
       }
     },
     {
-      "id": 17,
+      "id": 18,
       "type": "table",
       "title": "Check warn/fail (lý do)",
       "description": "",
@@ -254,7 +254,7 @@
       "options": {}
     },
     {
-      "id": 18,
+      "id": 19,
       "type": "table",
       "title": "Lịch sử duyệt tay",
       "description": "",
@@ -288,7 +288,7 @@
       "options": {}
     },
     {
-      "id": 19,
+      "id": 20,
       "type": "timeseries",
       "title": "Thời gian xử lý mỗi run (s)",
       "description": "",
@@ -328,7 +328,7 @@
       "options": {}
     },
     {
-      "id": 20,
+      "id": 21,
       "type": "timeseries",
       "title": "online_match_rate và p95 get_online_features",
       "description": "",

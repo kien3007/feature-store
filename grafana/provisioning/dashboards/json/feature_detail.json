@@ -18,7 +18,7 @@
   "refresh": "1m",
   "panels": [
     {
-      "id": 10,
+      "id": 11,
       "type": "timeseries",
       "title": "null_rate · $view.$feature",
       "description": "Ngưỡng = trung vị null_rate của 7 snapshot đã publish + 5 / +20 điểm phần trăm.",
@@ -160,7 +160,7 @@
       }
     },
     {
-      "id": 11,
+      "id": 12,
       "type": "timeseries",
       "title": "PSI · $view.$feature",
       "description": "PSI so với baseline gộp 7 snapshot đã publish gần nhất. Advisory: chỉ cảnh báo.",
@@ -300,7 +300,7 @@
       }
     },
     {
-      "id": 12,
+      "id": 13,
       "type": "timeseries",
       "title": "mean_shift_z · $view.$feature",
       "description": "|mean mới − mean baseline| / std baseline (std giữa các entity).",
@@ -440,7 +440,7 @@
       }
     },
     {
-      "id": 13,
+      "id": 14,
       "type": "timeseries",
       "title": "Trung bình · $view.$feature",
       "description": "",
@@ -479,7 +479,7 @@
       "options": {}
     },
     {
-      "id": 14,
+      "id": 15,
       "type": "table",
       "title": "PSI cao nhất · snapshot mới nhất trong khoảng",
       "description": "",
@@ -607,7 +607,7 @@
       "options": {}
     },
     {
-      "id": 15,
+      "id": 16,
       "type": "table",
       "title": "Mọi metric của $view.$feature · snapshot mới nhất",
       "description": "",
