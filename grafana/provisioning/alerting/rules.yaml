@@ -1,0 +1,109 @@
+# Cảnh báo đọc snapshot_runs. Cổng pass/warn/fail do runner.py quyết, Grafana chỉ báo.
+apiVersion: 1
+groups:
+  - orgId: 1
+    name: fsmon-snapshots
+    folder: fsmon
+    interval: 1m
+    rules:
+      - uid: fsmon-snapshot-blocked
+        title: Snapshot bị chặn
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: {from: 3600, to: 0}
+            datasourceUid: fsmon-pg
+            model:
+              refId: A
+              editorMode: code
+              rawQuery: true
+              format: table
+              rawSql: >-
+                SELECT to_char(snapshot_ts, 'YYYY-MM-DD') AS snapshot, status, 1::float AS value
+                FROM snapshot_runs
+                WHERE status IN ('quarantined', 'failed_after_gate')
+                  AND finished_at > now() - interval '1 hour'
+          - refId: B
+            datasourceUid: __expr__
+            model: {refId: B, type: reduce, expression: A, reducer: last, settings: {mode: dropNN}}
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: B
+              conditions: [{evaluator: {type: gt, params: [0]}}]
+        noDataState: OK
+        execErrState: Error
+        for: 0s
+        labels: {severity: critical, team: risk-data}
+        annotations:
+          summary: "Snapshot {{ $labels.snapshot }} bị chặn ({{ $labels.status }}); online store vẫn giữ snapshot tốt trước đó"
+          runbook: "fsmon status; xem Nhật ký chạy trên Grafana; duyệt tay: make approve SNAPSHOT=<ts> REASON=..."
+
+      - uid: fsmon-snapshot-warn
+        title: Snapshot publish kèm cảnh báo
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: {from: 3600, to: 0}
+            datasourceUid: fsmon-pg
+            model:
+              refId: A
+              editorMode: code
+              rawQuery: true
+              format: table
+              rawSql: >-
+                SELECT to_char(snapshot_ts, 'YYYY-MM-DD') AS snapshot, 1::float AS value
+                FROM snapshot_runs
+                WHERE status = 'published' AND health = 'warn'
+                  AND finished_at > now() - interval '1 hour'
+          - refId: B
+            datasourceUid: __expr__
+            model: {refId: B, type: reduce, expression: A, reducer: last, settings: {mode: dropNN}}
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: B
+              conditions: [{evaluator: {type: gt, params: [0]}}]
+        noDataState: OK
+        execErrState: Error
+        for: 0s
+        labels: {severity: warning, team: risk-data}
+        annotations:
+          summary: "Snapshot {{ $labels.snapshot }} đã publish nhưng có check advisory vượt ngưỡng (drift hoặc thời gian chạy)"
+
+      - uid: fsmon-pipeline-stale
+        title: Pipeline ngừng publish
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: {from: 3600, to: 0}
+            datasourceUid: fsmon-pg
+            model:
+              refId: A
+              editorMode: code
+              rawQuery: true
+              format: table
+              # 1,5 chu kỳ hằng ngày = 36 giờ kể từ lần publish gần nhất (giờ thật)
+              rawSql: >-
+                SELECT COALESCE(EXTRACT(EPOCH FROM now() - max(published_at)) / 3600.0, 1e6)::float AS value
+                FROM snapshot_runs WHERE status = 'published'
+          - refId: B
+            datasourceUid: __expr__
+            model: {refId: B, type: reduce, expression: A, reducer: last, settings: {mode: dropNN}}
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: B
+              conditions: [{evaluator: {type: gt, params: [36]}}]
+        noDataState: Alerting
+        execErrState: Error
+        for: 5m
+        labels: {severity: critical, team: risk-data}
+        annotations:
+          summary: "Không có snapshot nào được publish trong {{ humanize $values.B.Value }} giờ (ngưỡng 36 giờ)"

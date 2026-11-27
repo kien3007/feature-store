@@ -1,0 +1,10 @@
+apiVersion: 1
+providers:
+  - name: fsmon
+    folder: fsmon
+    type: file
+    disableDeletion: false
+    allowUiUpdates: false   # sửa trong repo (grafana/build_dashboards.py) rồi commit, không sửa tay trên UI
+    updateIntervalSeconds: 30
+    options:
+      path: /etc/grafana/provisioning/dashboards/json

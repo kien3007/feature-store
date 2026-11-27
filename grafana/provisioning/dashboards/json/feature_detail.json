@@ -1,0 +1,747 @@
+{
+  "uid": "fsmon-feature",
+  "title": "fsmon · Chi tiết feature",
+  "description": "Feature nào đang xấu đi?",
+  "tags": [
+    "fsmon",
+    "feature-store"
+  ],
+  "timezone": "utc",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": false,
+  "graphTooltip": 1,
+  "time": {
+    "from": "2019-08-25T00:00:00.000Z",
+    "to": "2019-11-03T00:00:00.000Z"
+  },
+  "refresh": "1m",
+  "panels": [
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "null_rate · $view.$feature",
+      "description": "Ngưỡng = trung vị null_rate của 7 snapshot đã publish + 5 / +20 điểm phần trăm.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fsmon-pg"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fsmon-pg"
+          },
+          "editorMode": "code",
+          "rawQuery": true,
+          "format": "time_series",
+          "rawSql": "SELECT m.snapshot_ts AS time, m.value AS \"null_rate\", m.warn_threshold AS \"warn\", m.fail_threshold AS \"fail\"\nFROM snapshot_metrics m JOIN latest_snapshot_runs r USING (run_id)\nWHERE m.feature_view = '$view' AND m.feature = '$feature' AND m.metric_name = 'null_rate'\n  AND $__timeFilter(m.snapshot_ts)\nORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "custom": {
+            "drawStyle": "line",
+            "showPoints": "always",
+            "pointSize": 5,
+            "spanNulls": true,
+            "lineWidth": 2
+          },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "min": 0,
+          "max": 1
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "warn"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "yellow"
+                }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    10,
+                    10
+                  ]
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 1
+              },
+              {
+                "id": "custom.showPoints",
+                "value": "never"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "fail"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    10,
+                    10
+                  ]
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 1
+              },
+              {
+                "id": "custom.showPoints",
+                "value": "never"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "null_rate"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "PSI · $view.$feature",
+      "description": "PSI so với baseline gộp 7 snapshot đã publish gần nhất. Advisory: chỉ cảnh báo.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fsmon-pg"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fsmon-pg"
+          },
+          "editorMode": "code",
+          "rawQuery": true,
+          "format": "time_series",
+          "rawSql": "SELECT m.snapshot_ts AS time, m.value AS \"psi\", m.warn_threshold AS \"warn\", m.fail_threshold AS \"fail\"\nFROM snapshot_metrics m JOIN latest_snapshot_runs r USING (run_id)\nWHERE m.feature_view = '$view' AND m.feature = '$feature' AND m.metric_name = 'psi'\n  AND $__timeFilter(m.snapshot_ts)\nORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "drawStyle": "line",
+            "showPoints": "always",
+            "pointSize": 5,
+            "spanNulls": true,
+            "lineWidth": 2
+          },
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "warn"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "yellow"
+                }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    10,
+                    10
+                  ]
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 1
+              },
+              {
+                "id": "custom.showPoints",
+                "value": "never"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "fail"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    10,
+                    10
+                  ]
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 1
+              },
+              {
+                "id": "custom.showPoints",
+                "value": "never"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "psi"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "mean_shift_z · $view.$feature",
+      "description": "|mean mới − mean baseline| / std baseline (std giữa các entity).",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fsmon-pg"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fsmon-pg"
+          },
+          "editorMode": "code",
+          "rawQuery": true,
+          "format": "time_series",
+          "rawSql": "SELECT m.snapshot_ts AS time, m.value AS \"mean_shift_z\", m.warn_threshold AS \"warn\", m.fail_threshold AS \"fail\"\nFROM snapshot_metrics m JOIN latest_snapshot_runs r USING (run_id)\nWHERE m.feature_view = '$view' AND m.feature = '$feature' AND m.metric_name = 'mean_shift_z'\n  AND $__timeFilter(m.snapshot_ts)\nORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "drawStyle": "line",
+            "showPoints": "always",
+            "pointSize": 5,
+            "spanNulls": true,
+            "lineWidth": 2
+          },
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "warn"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "yellow"
+                }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    10,
+                    10
+                  ]
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 1
+              },
+              {
+                "id": "custom.showPoints",
+                "value": "never"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "fail"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    10,
+                    10
+                  ]
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 1
+              },
+              {
+                "id": "custom.showPoints",
+                "value": "never"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "mean_shift_z"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      }
+    },
+    {
+      "id": 13,
+      "type": "timeseries",
+      "title": "Trung bình · $view.$feature",
+      "description": "",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fsmon-pg"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fsmon-pg"
+          },
+          "editorMode": "code",
+          "rawQuery": true,
+          "format": "time_series",
+          "rawSql": "SELECT m.snapshot_ts AS time, m.value AS mean FROM snapshot_metrics m JOIN latest_snapshot_runs r USING (run_id)\nWHERE m.feature_view = '$view' AND m.feature = '$feature' AND m.metric_name = 'mean'\n  AND $__timeFilter(m.snapshot_ts) ORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "showPoints": "always",
+            "pointSize": 5
+          }
+        },
+        "overrides": []
+      },
+      "options": {}
+    },
+    {
+      "id": 14,
+      "type": "table",
+      "title": "PSI cao nhất · snapshot mới nhất trong khoảng",
+      "description": "",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fsmon-pg"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 12,
+        "h": 10
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fsmon-pg"
+          },
+          "editorMode": "code",
+          "rawQuery": true,
+          "format": "table",
+          "rawSql": "WITH last AS (SELECT max(snapshot_ts) AS ts FROM latest_snapshot_runs WHERE $__timeFilter(snapshot_ts))\nSELECT m.feature_view AS view, m.feature, round(m.value::numeric, 4) AS psi, m.status\nFROM snapshot_metrics m JOIN latest_snapshot_runs r USING (run_id), last\nWHERE m.metric_name = 'psi' AND m.snapshot_ts = last.ts\nORDER BY m.value DESC NULLS LAST LIMIT 15"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "pass": {
+                  "color": "green",
+                  "index": 0
+                },
+                "warn": {
+                  "color": "yellow",
+                  "index": 1
+                },
+                "fail": {
+                  "color": "red",
+                  "index": 2
+                },
+                "published": {
+                  "color": "green",
+                  "index": 3
+                },
+                "quarantined": {
+                  "color": "red",
+                  "index": 4
+                },
+                "failed_after_gate": {
+                  "color": "purple",
+                  "index": 5
+                },
+                "failed": {
+                  "color": "dark-red",
+                  "index": 6
+                },
+                "running": {
+                  "color": "blue",
+                  "index": 7
+                }
+              }
+            }
+          ]
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "status"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "psi"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "gauge",
+                  "mode": "basic"
+                }
+              },
+              {
+                "id": "max",
+                "value": 0.3
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 0.1
+                    },
+                    {
+                      "color": "red",
+                      "value": 0.25
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {}
+    },
+    {
+      "id": 15,
+      "type": "table",
+      "title": "Mọi metric của $view.$feature · snapshot mới nhất",
+      "description": "",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fsmon-pg"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 16,
+        "w": 12,
+        "h": 10
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fsmon-pg"
+          },
+          "editorMode": "code",
+          "rawQuery": true,
+          "format": "table",
+          "rawSql": "WITH last AS (SELECT max(snapshot_ts) AS ts FROM latest_snapshot_runs WHERE $__timeFilter(snapshot_ts))\nSELECT m.metric_name AS metric, m.value, m.warn_threshold AS warn, m.fail_threshold AS fail, m.status,\n       m.severity, m.baseline_ref, m.detail\nFROM snapshot_metrics m JOIN latest_snapshot_runs r USING (run_id), last\nWHERE m.feature_view = '$view' AND (m.feature = '$feature' OR m.feature IS NULL) AND m.snapshot_ts = last.ts\nORDER BY m.feature NULLS FIRST, m.metric_name"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "pass": {
+                  "color": "green",
+                  "index": 0
+                },
+                "warn": {
+                  "color": "yellow",
+                  "index": 1
+                },
+                "fail": {
+                  "color": "red",
+                  "index": 2
+                },
+                "published": {
+                  "color": "green",
+                  "index": 3
+                },
+                "quarantined": {
+                  "color": "red",
+                  "index": 4
+                },
+                "failed_after_gate": {
+                  "color": "purple",
+                  "index": 5
+                },
+                "failed": {
+                  "color": "dark-red",
+                  "index": 6
+                },
+                "running": {
+                  "color": "blue",
+                  "index": 7
+                }
+              }
+            }
+          ]
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "status"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {}
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "view",
+        "label": "Feature view",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "fsmon-pg"
+        },
+        "refresh": 1,
+        "query": "SELECT DISTINCT feature_view FROM snapshot_metrics WHERE feature_view NOT LIKE '\\_\\_%' ORDER BY 1",
+        "definition": "feature views",
+        "current": {
+          "text": "customer_activity_7d",
+          "value": "customer_activity_7d"
+        }
+      },
+      {
+        "name": "feature",
+        "label": "Feature",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "fsmon-pg"
+        },
+        "refresh": 1,
+        "query": "SELECT DISTINCT feature FROM snapshot_metrics WHERE feature_view = '$view' AND feature IS NOT NULL ORDER BY 1",
+        "definition": "features of $view",
+        "current": {
+          "text": "amount_mean_7d",
+          "value": "amount_mean_7d"
+        }
+      }
+    ]
+  },
+  "links": [
+    {
+      "title": "fsmon",
+      "type": "dashboards",
+      "tags": [
+        "fsmon"
+      ],
+      "asDropdown": false,
+      "includeVars": false,
+      "keepTime": true
+    }
+  ]
+}
