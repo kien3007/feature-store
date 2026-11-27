@@ -94,7 +94,7 @@ make airflow               # Airflow 3 trong Docker, DAG snapshot_pipeline chạ
 | http://localhost:3000 | Grafana (admin/admin; xem ẩn danh được): Tổng quan, Chi tiết feature, Nhật ký chạy |
 | http://localhost:8080 | Airflow |
 | http://localhost:8088/reports/ | Báo cáo Evidently HTML của snapshot warn/fail |
-| http://localhost:8088/alerts | Thông báo Grafana đã gửi tới contact point webhook |
+| http://localhost:8088/alerts.html | Thông báo Grafana đã gửi tới contact point webhook (JSON ở `/alerts`) |
 | `data/alerts.log` | Dấu vết cảnh báo do `runner.py` ghi, vẫn có khi Grafana tắt |
 
 Chạy pipeline không cần Docker (kho metrics SQLite):
@@ -172,6 +172,28 @@ Hai điều chỉnh so với kế hoạch, rút ra từ lần hiệu chỉnh nà
 | 6 | `approve` snapshot bước 2 | published, lưu người duyệt và lý do | không đổi (snapshot cũ hơn bản đang phục vụ) |
 
 Từng lỗi riêng lẻ: `make demo-fault FAULT=null_spike|schema_drop|duplicate_keys|shift|out_of_range|row_drop|stale`.
+
+### Ảnh chụp demo (2026-11-27, kho metrics PostgreSQL)
+
+**Kết quả `make demo` trong terminal**: 3 lỗi blocker bị chặn và online store không đổi; `shift` vẫn publish kèm warn;
+duyệt tay chỉ ghi vào offline.
+
+![Kết quả make demo](docs/img/demo_terminal.png)
+
+**Cảnh báo Grafana đã nhận qua webhook** (`http://localhost:8088/alerts.html`): mỗi snapshot bị chặn hoặc publish kèm
+cảnh báo có một thông báo firing, sau đó resolved. Dòng cuối là lần gửi đầu tiên, trước khi sửa template `$labels`.
+
+![Cảnh báo đã nhận](docs/img/alerts_received.png)
+
+**Báo cáo Evidently của snapshot null_spike** (2019-10-03, `customer_activity_7d`): 366 giá trị thiếu ở snapshot hiện
+tại so với 0 ở baseline gộp 7 snapshot.
+
+![Báo cáo Evidently](docs/img/evidently_report.png)
+
+**Airflow**: 31 lần chạy `snapshot_pipeline` đều thành công, gồm 1 lần theo lịch và 30 lần backfill; cột `quarantine`
+bị bỏ qua (màu hồng) vì cổng cho đi nhánh `publish`.
+
+![Airflow runs](docs/img/airflow_runs.png)
 
 ## Airflow
 
