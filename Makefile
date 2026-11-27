@@ -114,12 +114,12 @@ test-fast:
 	$(UV) run pytest -m "not integration"
 
 lint:
-	$(UV) run ruff check src tests scripts dags grafana feature_repo
-	$(UV) run ruff format --check src tests scripts grafana
+	$(UV) run ruff check src tests scripts dags grafana feature_repo web
+	$(UV) run ruff format --check src tests scripts grafana web
 
 fmt:
-	$(UV) run ruff format src tests scripts grafana
-	$(UV) run ruff check --fix src tests scripts dags grafana feature_repo
+	$(UV) run ruff format src tests scripts grafana web
+	$(UV) run ruff check --fix src tests scripts dags grafana feature_repo web
 
 plan:
 	mkdir -p data && $(UV) run feast -c feature_repo plan --skip-source-validation

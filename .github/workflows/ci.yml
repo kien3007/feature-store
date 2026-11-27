@@ -20,8 +20,8 @@ jobs:
         run: uv sync --frozen
       - name: Lint
         run: |
-          uv run ruff check src tests scripts dags grafana feature_repo
-          uv run ruff format --check src tests scripts grafana
+          uv run ruff check src tests scripts dags grafana feature_repo web
+          uv run ruff format --check src tests scripts grafana web
       - name: Test
         run: uv run pytest
       - name: feast plan
