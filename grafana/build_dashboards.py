@@ -199,6 +199,39 @@ def dashboard(uid, title, panels, desc, templating=None, links=None):
     }
 
 
+def alert_list(grid) -> dict:
+    """Panel có sẵn của Grafana: trạng thái các alert rule của fsmon, ngay trên dashboard."""
+    x, y, w, h = grid
+    return {
+        "id": _next_id(),
+        "type": "alertlist",
+        "title": "Cảnh báo Grafana",
+        "description": "Trạng thái hiện tại của 3 alert rule (Alerting → Alert rules). "
+        "Lịch sử chuyển trạng thái: mở rule → tab History.",
+        "gridPos": {"x": x, "y": y, "w": w, "h": h},
+        "options": {
+            "viewMode": "list",
+            "groupMode": "default",
+            "groupBy": [],
+            "maxItems": 20,
+            "sortOrder": 1,
+            "dashboardAlerts": False,
+            "alertName": "",
+            "alertInstanceLabelFilter": '{team="risk-data"}',
+            "datasource": "grafana",
+            "stateFilter": {
+                "firing": True,
+                "pending": True,
+                "recovering": True,
+                "noData": True,
+                "normal": True,
+                "error": True,
+            },
+            "showInstances": False,
+        },
+    }
+
+
 # ---------------- Tổng quan ----------------
 
 
@@ -287,10 +320,11 @@ WHERE $__timeFilter(snapshot_ts)""",
                 {"color": "green", "value": 0.95},
             ],
         ),
+        alert_list((0, 13, 24, 8)),
         panel(
             "timeseries",
             "Số dòng theo view",
-            (0, 13, 12, 7),
+            (0, 21, 12, 7),
             [
                 target("""
 SELECT m.snapshot_ts AS time, m.feature_view AS metric, m.value
@@ -302,7 +336,7 @@ WHERE m.metric_name = 'row_count' AND $__timeFilter(m.snapshot_ts) ORDER BY 1"""
         panel(
             "timeseries",
             "Độ tươi nguồn (giờ)",
-            (12, 13, 12, 7),
+            (12, 21, 12, 7),
             [
                 target("""
 SELECT m.snapshot_ts AS time, max(m.value) AS freshness_lag, max(m.warn_threshold) AS warn,
@@ -325,7 +359,7 @@ WHERE m.metric_name = 'freshness_lag' AND $__timeFilter(m.snapshot_ts) GROUP BY 
         panel(
             "table",
             "10 lần chạy gần nhất",
-            (0, 20, 24, 12),
+            (0, 28, 24, 12),
             [
                 target(
                     """
