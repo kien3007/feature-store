@@ -1,0 +1,133 @@
+# Hạ tầng local: PostgreSQL (metrics + metadata Airflow), Grafana, server báo cáo/cảnh báo.
+# Airflow nằm trong profile "airflow":  docker compose --profile airflow up -d
+name: fsmon
+
+x-airflow-env: &airflow-env
+  AIRFLOW__CORE__EXECUTOR: LocalExecutor
+  AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+  AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+  AIRFLOW__CORE__DAGS_FOLDER: /opt/project/dags
+  AIRFLOW__CORE__PARALLELISM: "4"
+  AIRFLOW__CORE__MAX_ACTIVE_RUNS_PER_DAG: "1"
+  AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "False"
+  AIRFLOW__CORE__EXECUTION_API_SERVER_URL: http://airflow-apiserver:8080/execution/
+  AIRFLOW__API_AUTH__JWT_SECRET: fsmon-local-dev-jwt-secret-change-me
+  AIRFLOW__API__SECRET_KEY: fsmon-local-dev-secret-change-me
+  AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_ALL_ADMINS: "True"
+  AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: "True"
+  AIRFLOW__DAG_PROCESSOR__REFRESH_INTERVAL: "30"
+  # Môi trường riêng của pipeline (venv fsmon trong image, mã nguồn mount từ repo)
+  FSMON_ROOT: /opt/project
+  FSMON_PYTHON: /opt/fsmon-venv/bin/python
+  FSMON_DB_DSN: postgresql+psycopg://fsmon:fsmon@postgres:5432/fsmon
+  FSMON_DUCKDB_MEMORY_LIMIT: 4GB
+  PYTHONPATH: /opt/project/src
+  TZ: UTC
+
+x-airflow-common: &airflow-common
+  build:
+    context: .
+    dockerfile: airflow/Dockerfile
+  image: fsmon-airflow:3.3.2
+  environment: *airflow-env
+  volumes:
+    - .:/opt/project
+  depends_on:
+    postgres:
+      condition: service_healthy
+  profiles: ["airflow"]
+  restart: unless-stopped
+
+services:
+  postgres:
+    image: postgres:17.12
+    environment:
+      POSTGRES_USER: fsmon
+      POSTGRES_PASSWORD: fsmon
+      POSTGRES_DB: fsmon
+      TZ: UTC
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/10-schema.sql:ro
+      - ./sql/init-roles.sh:/docker-entrypoint-initdb.d/20-roles.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fsmon -d fsmon"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:12.4.16
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/provisioning/dashboards/json/overview.json
+      GF_UNIFIED_ALERTING_EVALUATION_TIMEOUT: 30s
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana:/var/lib/grafana
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Server tĩnh cho báo cáo Evidently (/reports) và đích webhook của Grafana (/alert).
+  fsmon-web:
+    image: python:3.11.14-slim
+    command: ["python", "/app/server.py"]
+    environment:
+      REPORTS_DIR: /data/reports
+      ALERTS_FILE: /data/alerts_received.log
+      PORT: "8088"
+    ports:
+      - "8088:8088"
+    volumes:
+      - ./web/server.py:/app/server.py:ro
+      - ./data:/data
+    restart: unless-stopped
+
+  airflow-init:
+    <<: *airflow-common
+    restart: "no"
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        airflow db migrate &&
+        /opt/fsmon-venv/bin/python -m fsmon.cli init-db
+
+  airflow-apiserver:
+    <<: *airflow-common
+    command: api-server
+    ports:
+      - "8080:8080"
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-scheduler:
+    <<: *airflow-common
+    command: scheduler
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-dag-processor:
+    <<: *airflow-common
+    command: dag-processor
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+
+volumes:
+  pgdata:
+  grafana:

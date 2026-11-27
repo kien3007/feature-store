@@ -1,0 +1,53 @@
+[project]
+name = "fsmon"
+version = "0.1.0"
+description = "Feature store chạy local bằng Feast, cập nhật định kỳ và chấm điểm sức khỏe từng snapshot"
+authors = [
+    { name = "kien3007", email = "kiennguyen300703@gmail.com" }
+]
+requires-python = ">=3.11,<3.13"
+# Ghim đúng phiên bản: hành vi Feast và Evidently đổi giữa các bản.
+dependencies = [
+    "duckdb==2.0.1",
+    "evidently==0.7.23",
+    "feast==0.68.0",
+    "numpy==2.4.6",
+    "pandas==2.3.3",
+    "psycopg[binary]==3.3.9",
+    "pyarrow==26.0.1",
+    "pyyaml==6.0.4",
+    "sqlalchemy==2.1.9",
+    "typer==0.29.3",
+]
+
+[project.scripts]
+fsmon = "fsmon.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.12.23,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest==9.2.0",
+    "ruff==0.17.6",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+extend-exclude = ["data", "dataset"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["E501", "B008"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["fsmon"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+markers = ["integration: chạy Feast thật (chậm hơn)"]
+addopts = "-q"
+filterwarnings = ["ignore::DeprecationWarning"]

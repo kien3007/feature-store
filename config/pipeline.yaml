@@ -1,0 +1,44 @@
+# Cấu hình pipeline. Mọi đường dẫn tương đối tính từ gốc repo.
+# Biến môi trường ghi đè: FSMON_DB_DSN, FSMON_ROOT, FSMON_DUCKDB_MEMORY_LIMIT.
+
+paths:
+  source_dir: dataset            # file gốc tải về (CSV/JSON), không sửa
+  raw: data/raw                  # Parquet chuẩn hóa từ source_dir (fsmon ingest)
+  staging: data/staging          # snapshot_ts=YYYY-MM-DD/<view>.parquet
+  published: data/published      # <view>.parquet, batch source của Feast
+  quarantine: data/quarantine    # snapshot bị chặn
+  reports: data/reports          # báo cáo Evidently HTML
+  alerts_log: data/alerts.log
+  feature_repo: feature_repo
+
+schedule:
+  cadence: daily
+  period_hours: 24
+
+# Dataset kết thúc 2019-10-31. Đồng hồ phát lại ánh xạ logical date của Airflow
+# sang thời gian của dữ liệu: snapshot_ts = data_anchor + (logical_date - wall_anchor).
+# Với neo dưới đây, lịch chạy ngày 2026-11-27 tính snapshot 2019-10-01, mỗi ngày thật
+# tiến thêm một ngày dữ liệu; backfill logical date 2026-10-28..2026-11-26 tạo
+# 30 snapshot 2019-09-01..2019-09-30.
+replay:
+  enabled: true
+  wall_anchor: "2026-11-27"
+  data_anchor: "2019-10-01"
+
+population:
+  # Một khách hàng có mặt trong snapshot nếu có giao dịch trong cửa sổ này trước snapshot_ts.
+  active_window_days: 90
+
+duckdb:
+  memory_limit: 6GB
+  threads: 4
+
+metrics_db:
+  dsn: postgresql+psycopg://fsmon:fsmon@localhost:5432/fsmon
+
+verify:
+  sample_size: 300        # số entity so khớp online với published
+  latency_samples: 100    # số lần gọi get_online_features đơn lẻ để đo p95
+
+reports:
+  base_url: http://localhost:8088/reports

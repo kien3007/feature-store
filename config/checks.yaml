@@ -1,0 +1,111 @@
+# Hợp đồng schema và ngưỡng warn/fail. Đổi ở đây, không cần sửa code.
+#
+# severity:
+#   blocker       fail -> quarantine, không publish
+#   advisory      fail -> vẫn publish, snapshot mang trạng thái warn
+#   post_publish  fail -> failed_after_gate, khôi phục online store
+#   info          chỉ ghi nhận
+#
+# Kiểu trong hợp đồng: int64 | double | string | timestamp.
+# Feature view trong feature_repo/ khai báo đúng các kiểu này (tests/test_contract.py kiểm).
+
+baseline:
+  window: 7          # trung vị tối đa 7 snapshot đã publish gần nhất
+  min_snapshots: 7   # ít hơn thì check tương đối chỉ ghi metric, nhãn baseline_incomplete
+
+checks:
+  schema_match:       {severity: blocker}
+  key_duplicate_rate: {severity: blocker, fail: 0.0}
+  row_count_change:   {severity: blocker, warn: 0.20, fail: 0.50}
+  entity_coverage:    {severity: blocker, warn: 0.98, fail: 0.90}
+  freshness_lag:      {severity: blocker, warn_periods: 1, fail_periods: 2}
+  null_rate:          {severity: blocker, warn_delta: 0.05, fail_delta: 0.20}
+  inf_nan_count:      {severity: blocker, fail: 0}
+  out_of_range_rate:  {severity: blocker, warn: 0.0, fail: 0.01}
+  distinct_count:     {severity: advisory, warn: 1}
+  psi:                {severity: advisory, warn: 0.10, fail: 0.25, bins: 10}
+  mean_shift_z:       {severity: advisory, warn: 3.0, fail: 5.0}
+  # Thời gian xử lý (tổng các bước, không tính thời gian chờ của scheduler).
+  # Sàn min_warn_s tránh báo giả khi trung vị chỉ vài giây.
+  run_duration_s:     {severity: advisory, warn_ratio: 2.0, min_warn_s: 10}
+  online_match_rate:  {severity: post_publish, warn: 0.999, fail: 0.99}
+  online_get_p95_ms:  {severity: info}
+
+# Cột hệ thống có ở mọi view.
+system_columns:
+  client_id: int64
+  event_timestamp: timestamp
+  created_timestamp: timestamp
+
+# Thuộc tính feature:
+#   type        kiểu bắt buộc
+#   nullable    false -> có null là fail tuyệt đối (không cần baseline)
+#   range       [min, max], null = không chặn phía đó
+#   categorical true -> đếm distinct, không tính PSI/mean shift
+#   drift       false -> bỏ qua PSI/mean shift
+#   freshness   (mức view) true -> đo freshness_lag trên nguồn giao dịch
+views:
+  customer_profile:
+    contract_version: 1
+    owner: risk-data
+    domain: customer
+    ttl_days: 3
+    freshness: false
+    features:
+      current_age:        {type: int64,  nullable: false, range: [18, 120]}
+      credit_score:       {type: int64,  nullable: false, range: [300, 850]}
+      yearly_income:      {type: double, nullable: false, range: [0, null]}
+      total_debt:         {type: double, nullable: false, range: [0, null]}
+      debt_to_income:     {type: double, nullable: true,  range: [0, null]}
+      num_credit_cards:   {type: int64,  nullable: false, range: [0, 20]}
+      card_cnt:           {type: int64,  nullable: false, range: [0, null]}
+      total_credit_limit: {type: double, nullable: false, range: [0, null]}
+      avg_card_age_years: {type: double, nullable: false, range: [0, 60]}
+      gender:             {type: string, nullable: false, categorical: true}
+
+  customer_activity_7d:
+    contract_version: 1
+    owner: risk-data
+    domain: transactions
+    ttl_days: 3
+    freshness: true
+    features:
+      txn_cnt_7d:               {type: int64,  nullable: false, range: [0, null]}
+      amount_sum_7d:            {type: double, nullable: false}
+      amount_mean_7d:           {type: double, nullable: true}
+      amount_max_7d:            {type: double, nullable: true}
+      refund_cnt_7d:            {type: int64,  nullable: false, range: [0, null]}
+      online_txn_rate_7d:       {type: double, nullable: true,  range: [0, 1]}
+      chip_txn_rate_7d:         {type: double, nullable: true,  range: [0, 1]}
+      error_cnt_7d:             {type: int64,  nullable: false, range: [0, null]}
+      distinct_merchant_cnt_7d: {type: int64,  nullable: false, range: [0, null]}
+
+  customer_activity_30d:
+    contract_version: 1
+    owner: risk-data
+    domain: transactions
+    ttl_days: 3
+    freshness: true
+    features:
+      txn_cnt_30d:          {type: int64,  nullable: false, range: [0, null]}
+      amount_sum_30d:       {type: double, nullable: false}
+      amount_mean_30d:      {type: double, nullable: true}
+      amount_std_30d:       {type: double, nullable: true,  range: [0, null]}
+      refund_cnt_30d:       {type: int64,  nullable: false, range: [0, null]}
+      error_rate_30d:       {type: double, nullable: true,  range: [0, 1]}
+      online_txn_rate_30d:  {type: double, nullable: true,  range: [0, 1]}
+      distinct_mcc_cnt_30d: {type: int64,  nullable: false, range: [0, null]}
+      top_mcc_30d:          {type: int64,  nullable: true,  categorical: true}
+
+  customer_rfm_90d:
+    contract_version: 1
+    owner: risk-data
+    domain: transactions
+    ttl_days: 3
+    freshness: true
+    features:
+      days_since_last_txn: {type: double, nullable: false, range: [0, 90]}
+      txn_cnt_90d:         {type: int64,  nullable: false, range: [1, null]}
+      amount_sum_90d:      {type: double, nullable: false}
+      avg_ticket_90d:      {type: double, nullable: false}
+      active_days_90d:     {type: int64,  nullable: false, range: [1, 90]}

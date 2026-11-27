@@ -1,0 +1,433 @@
+{
+  "uid": "fsmon-runs",
+  "title": "fsmon · Nhật ký chạy",
+  "description": "Chuyện gì xảy ra ở lần chạy này?",
+  "tags": [
+    "fsmon",
+    "feature-store"
+  ],
+  "timezone": "utc",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": false,
+  "graphTooltip": 1,
+  "time": {
+    "from": "2019-08-25T00:00:00.000Z",
+    "to": "2019-11-03T00:00:00.000Z"
+  },
+  "refresh": "1m",
+  "panels": [
+    {
+      "id": 16,
+      "type": "table",
+      "title": "snapshot_runs",
+      "description": "",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fsmon-pg"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 12
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fsmon-pg"
+          },
+          "editorMode": "code",
+          "rawQuery": true,
+          "format": "table",
+          "rawSql": "SELECT to_char(snapshot_ts, 'YYYY-MM-DD') AS snapshot, status, health, trigger, fault,\n       round(duration_s::numeric, 1) AS \"duration (s)\", row_count, materialized, reason,\n       report_url AS report, approved_by, approval_reason, git_sha, feast_version,\n       started_at, finished_at, left(run_id, 8) AS run\nFROM snapshot_runs WHERE $__timeFilter(snapshot_ts)\nORDER BY started_at DESC"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "pass": {
+                  "color": "green",
+                  "index": 0
+                },
+                "warn": {
+                  "color": "yellow",
+                  "index": 1
+                },
+                "fail": {
+                  "color": "red",
+                  "index": 2
+                },
+                "published": {
+                  "color": "green",
+                  "index": 3
+                },
+                "quarantined": {
+                  "color": "red",
+                  "index": 4
+                },
+                "failed_after_gate": {
+                  "color": "purple",
+                  "index": 5
+                },
+                "failed": {
+                  "color": "dark-red",
+                  "index": 6
+                },
+                "running": {
+                  "color": "blue",
+                  "index": 7
+                }
+              }
+            }
+          ]
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "status"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "custom.width",
+                "value": 140
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "health"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "custom.width",
+                "value": 70
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "report"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Báo cáo Evidently",
+                    "url": "${__value.raw}",
+                    "targetBlank": true
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "reason"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 420
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        }
+      }
+    },
+    {
+      "id": 17,
+      "type": "table",
+      "title": "Check warn/fail (lý do)",
+      "description": "",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fsmon-pg"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 12,
+        "w": 14,
+        "h": 11
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fsmon-pg"
+          },
+          "editorMode": "code",
+          "rawQuery": true,
+          "format": "table",
+          "rawSql": "SELECT to_char(m.snapshot_ts, 'YYYY-MM-DD') AS snapshot, m.feature_view AS view, m.feature, m.metric_name AS metric,\n       m.value, m.warn_threshold AS warn, m.fail_threshold AS fail, m.status, m.severity, m.detail\nFROM snapshot_metrics m JOIN latest_snapshot_runs r USING (run_id)\nWHERE m.status IN ('warn', 'fail') AND $__timeFilter(m.snapshot_ts)\nORDER BY m.snapshot_ts DESC, m.status, m.feature_view"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "pass": {
+                  "color": "green",
+                  "index": 0
+                },
+                "warn": {
+                  "color": "yellow",
+                  "index": 1
+                },
+                "fail": {
+                  "color": "red",
+                  "index": 2
+                },
+                "published": {
+                  "color": "green",
+                  "index": 3
+                },
+                "quarantined": {
+                  "color": "red",
+                  "index": 4
+                },
+                "failed_after_gate": {
+                  "color": "purple",
+                  "index": 5
+                },
+                "failed": {
+                  "color": "dark-red",
+                  "index": 6
+                },
+                "running": {
+                  "color": "blue",
+                  "index": 7
+                }
+              }
+            }
+          ]
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "status"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {}
+    },
+    {
+      "id": 18,
+      "type": "table",
+      "title": "Lịch sử duyệt tay",
+      "description": "",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fsmon-pg"
+      },
+      "gridPos": {
+        "x": 14,
+        "y": 12,
+        "w": 10,
+        "h": 11
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fsmon-pg"
+          },
+          "editorMode": "code",
+          "rawQuery": true,
+          "format": "table",
+          "rawSql": "SELECT to_char(snapshot_ts, 'YYYY-MM-DD') AS snapshot, approved_by, approval_reason, approved_at, status\nFROM snapshot_runs WHERE approved_by IS NOT NULL ORDER BY approved_at DESC"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {}
+    },
+    {
+      "id": 19,
+      "type": "timeseries",
+      "title": "Thời gian xử lý mỗi run (s)",
+      "description": "",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fsmon-pg"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 23,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fsmon-pg"
+          },
+          "editorMode": "code",
+          "rawQuery": true,
+          "format": "time_series",
+          "rawSql": "SELECT m.snapshot_ts AS time, m.value AS run_duration_s, m.warn_threshold AS warn\nFROM snapshot_metrics m JOIN latest_snapshot_runs r USING (run_id)\nWHERE m.metric_name = 'run_duration_s' AND $__timeFilter(m.snapshot_ts) ORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "showPoints": "always",
+            "pointSize": 4
+          }
+        },
+        "overrides": []
+      },
+      "options": {}
+    },
+    {
+      "id": 20,
+      "type": "timeseries",
+      "title": "online_match_rate và p95 get_online_features",
+      "description": "",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "fsmon-pg"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 23,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fsmon-pg"
+          },
+          "editorMode": "code",
+          "rawQuery": true,
+          "format": "time_series",
+          "rawSql": "SELECT m.snapshot_ts AS time, min(m.value) AS online_match_rate\nFROM snapshot_metrics m JOIN latest_snapshot_runs r USING (run_id)\nWHERE m.metric_name = 'online_match_rate' AND $__timeFilter(m.snapshot_ts) GROUP BY 1 ORDER BY 1"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "fsmon-pg"
+          },
+          "editorMode": "code",
+          "rawQuery": true,
+          "format": "time_series",
+          "rawSql": "SELECT m.snapshot_ts AS time, m.value AS p95_ms\nFROM snapshot_metrics m JOIN latest_snapshot_runs r USING (run_id)\nWHERE m.metric_name = 'online_get_p95_ms' AND $__timeFilter(m.snapshot_ts) ORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "showPoints": "always",
+            "pointSize": 4
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "online_match_rate"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percentunit"
+              },
+              {
+                "id": "min",
+                "value": 0.98
+              },
+              {
+                "id": "max",
+                "value": 1
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "p95_ms"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ms"
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {}
+    }
+  ],
+  "templating": {
+    "list": []
+  },
+  "links": [
+    {
+      "title": "fsmon",
+      "type": "dashboards",
+      "tags": [
+        "fsmon"
+      ],
+      "asDropdown": false,
+      "includeVars": false,
+      "keepTime": true
+    }
+  ]
+}

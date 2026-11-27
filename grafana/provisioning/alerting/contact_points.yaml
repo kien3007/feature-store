@@ -1,0 +1,26 @@
+apiVersion: 1
+contactPoints:
+  - orgId: 1
+    name: fsmon-webhook
+    receivers:
+      # Webhook tới fsmon-web trong Compose: ghi vào data/alerts_received.log, xem ở http://localhost:8088/alerts
+      - uid: fsmon-webhook
+        type: webhook
+        settings:
+          url: http://fsmon-web:8088/alert
+          httpMethod: POST
+        disableResolveMessage: false
+      # Thêm Telegram: bỏ comment và điền token/chat id (đừng commit token thật).
+      # - uid: fsmon-telegram
+      #   type: telegram
+      #   settings:
+      #     bottoken: $__env{TELEGRAM_BOT_TOKEN}
+      #     chatid: $__env{TELEGRAM_CHAT_ID}
+
+policies:
+  - orgId: 1
+    receiver: fsmon-webhook
+    group_by: ["alertname", "snapshot"]
+    group_wait: 10s
+    group_interval: 1m
+    repeat_interval: 4h

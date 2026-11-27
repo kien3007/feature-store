@@ -1,0 +1,18 @@
+# Dữ liệu: gốc tải về và mọi thứ pipeline sinh ra
+dataset/
+data/
+
+# Python / công cụ
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Feast sinh khi chạy trong feature_repo
+feature_repo/data/
+
+# Bí mật và cấu hình máy
+.env
+.claude/settings.local.json

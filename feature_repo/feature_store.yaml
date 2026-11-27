@@ -1,0 +1,14 @@
+# Repo Feast chạy local. Đường dẫn tương đối tính từ thư mục feature_repo/,
+# nên cùng file này dùng được trên Windows lẫn trong container Airflow.
+project: fsmon
+provider: local
+registry:
+  registry_type: file
+  path: ../data/registry.db
+  cache_ttl_seconds: 0
+online_store:
+  type: sqlite
+  path: ../data/online_store.db
+offline_store:
+  type: file
+entity_key_serialization_version: 3
